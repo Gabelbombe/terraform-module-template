@@ -1,4 +1,4 @@
-# Contribution Guidelines
+# Contribution Guidelines<a name='contribution-guidelines' />
 
 Contributions to this Module are very welcome! We follow a fairly standard [pull request process](https://help.github.com/articles/about-pull-requests/) for contributions, subject to the following guidelines:
 
@@ -11,13 +11,13 @@ Contributions to this Module are very welcome! We follow a fairly standard [pull
     - [Create a pull request](#create-a-pull-request)
     - [Merge and release](#merge-and-release)
 
-## File a GitHub issue
+## File a GitHub issue<a name='file-a-github-issue' />
 
 Before starting any work, we recommend filing a GitHub issue in this repo. This is your chance to ask questions and
 get feedback from the maintainers and the community before you sink a lot of time into writing (possibly the wrong)
 code. If there is anything you're unsure about, just ask!
 
-## Make improvments
+## Make improvments<a name='make-improvments' />
 
 At this point, make your code changes and use your new test case to verify that everything is working. As you work, keep in mind two things:
 
@@ -26,15 +26,15 @@ At this point, make your code changes and use your new test case to verify that 
 3. Backwards compatibility
 4. Downtime
 
-### Documentation and Testability
+### Documentation and Testability<a name='documentation-and-testability' />
 
 Keep in mind when making changes or add significant contributions to include examples, both for documentation purposes but also to make sure we're able to perform tests and validations against the changes that are made.
 
 ### Code Guidelines
 
-Please read our guidelines in STYLES.md
+Please read our guidelines in [STYLES.md](STYLES.md)
 
-### Backwards compatibility
+### Backwards compatibility <a name='backwards-compatibility' />
 
 Please make every effort to avoid unnecessary backwards incompatible changes. With Terraform code, this means:
 
@@ -46,14 +46,14 @@ Please make every effort to avoid unnecessary backwards incompatible changes. Wi
 If a backwards incompatible change cannot be avoided, please make sure to call that out when you submit a pull request,
 explaining why the change is absolutely necessary.
 
-### Downtime
+### Downtime <a name='downtime' />
 
 Bear in mind that the Terraform code in this Module is used by real companies to run real infrastructure in
 production, and certain types of changes could cause downtime. For example, consider the following:
 
 1. If you rename a resource (e.g. `aws_instance "foo"` -> `aws_instance "bar"`), Terraform will see that as deleting
    the old resource and creating a new one.
-1. If you change certain attributes of a resource (e.g. the `name` of an `aws_elb`), the cloud provider (e.g. AWS) may
+2. If you change certain attributes of a resource (e.g. the `name` of an `aws_elb`), the cloud provider (e.g. AWS) may
    treat that as an instruction to delete the old resource and a create a new one.
 
 Deleting certain types of resources (e.g. virtual servers, load balancers) can cause downtime, so when making code
@@ -62,7 +62,7 @@ changes, think carefully about how to avoid that. For example, can you avoid dow
 the `terraform state` command? If so, make sure to note this in our pull request. If  downtime cannot be avoided,
 please make sure to call that out when you submit a pull request.
 
-## Create a pull request
+## Create a pull request<a name='create-a-pull-request' />
 
 [Create a pull request](https://help.github.com/articles/creating-a-pull-request/) with your changes. Please make sure
 to include the following:
@@ -71,7 +71,7 @@ to include the following:
 2. The output of your automated test run, provided by Travis (included automatically).
 3. Any notes on backwards incompatibility or downtime.
 
-## Merge and release
+## Merge and release<a name='merge-and-release' />
 
 The maintainers for this repo will review your code and provide feedback. If everything looks good, they will merge the
 code and release a new version, which you'll be able to find in the [releases page](../../releases).
