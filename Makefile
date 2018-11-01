@@ -33,7 +33,7 @@ endef
 	@if test "$(REGION)" = "" ; then echo "REGION not set"; exit 1; fi
 
 .source-dir:
-	$(call chdir, target)
+	$(call chdir, modules)
 
 .assert-%:
 	@if [ "${${*}}" = "" ]; then 																									\
