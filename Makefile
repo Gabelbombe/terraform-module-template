@@ -1,4 +1,4 @@
-ROLE 					?= default ## make {func} ROLE=<AWS_ACCOUNT_ROLE>
+ROLE          ?= default ## make {func} ROLE=<AWS_ACCOUNT_ROLE>
 
 
 ###############################################
@@ -6,8 +6,8 @@ ROLE 					?= default ## make {func} ROLE=<AWS_ACCOUNT_ROLE>
 # - Setup and templating variables
 ###############################################
 
-SHELL 				:= /bin/bash
-CHDIR_SHELL 	:= $(SHELL)
+SHELL         := /bin/bash
+CHDIR_SHELL   := $(SHELL)
 OS						:= darwin
 
 ACCOUNT_ID  	:= $(shell aws sts --profile $(ROLE) get-caller-identity --output text --query 'Account')
@@ -49,9 +49,9 @@ endef
 # - follows standard design patterns
 ###############################################
 graph: .source-dir
-	terraform graph |dot -Tpng >| $(LOGS_DIR)/graph.png
+	terraform init && terraform graph |dot -Tpng >| $(LOGS_DIR)/graph.png
 
-clean:
+clean: .source-dir
 	@rm -rf .terraform
 	@rm -f $(LOGS_DIR)/graph.png
 	@rm -f $(LOGS_DIR)/*.log
@@ -108,11 +108,11 @@ test:
 
 
 target_name-destroy: .source-dir .check-region
-	echo -e "\n\n\n\ntarget_name-destroy: $(date +"%Y-%m-%d @ %H:%M:%S")\n" \
+	echo -e "\n\n\n\ntarget_name-destroy: $(date +"%Y-%m-%d @ %H:%M:%S")\n" 			\
 		>> $(LOGS_DIR)/target_name-destroy.log
 	terraform init 2>&1 |tee $(LOGS_DIR)/target_name-init.log
 	aws-vault exec $(ROLE) --assume-role-ttl=60m -- terraform destroy 						\
-		-state=$(STATE_DIR)/$(ACCOUNT_ID)/${REGION}-target_name.tfstate 			\
+		-state=$(STATE_DIR)/$(ACCOUNT_ID)/${REGION}-target_name.tfstate 						\
 		-var region="${REGION}" 																										\
 		-auto-approve																																\
 	2>&1 |tee $(LOGS_DIR)/target_name-destroy.log
