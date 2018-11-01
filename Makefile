@@ -8,16 +8,17 @@ ROLE          ?= default ## make {func} ROLE=<AWS_ACCOUNT_ROLE>
 
 SHELL         := /bin/bash
 CHDIR_SHELL   := $(SHELL)
-OS						:= darwin
+OS            := darwin
 
-ACCOUNT_ID  	:= $(shell aws sts --profile $(ROLE) get-caller-identity --output text --query 'Account')
+ACCOUNT_ID    := $(shell aws sts --profile $(ROLE) get-caller-identity --output text --query 'Account')
 
-BASE_DIR			:= $(shell pwd)
-STATE_DIR 		:= $(BASE_DIR)/_states
-LOGS_DIR			:= $(BASE_DIR)/_logs
-KEYS_DIR			:= $(BASE_DIR)/_keys
+BASE_DIR      := $(shell pwd)
+STATE_DIR     := $(BASE_DIR)/_states
+LOGS_DIR      := $(BASE_DIR)/_logs
+KEYS_DIR      := $(BASE_DIR)/_keys
 
-
+## Default generic to test until I move it over to Rake
+default: test
 
 
 ###############################################
@@ -36,10 +37,10 @@ endef
 	$(call chdir, modules)
 
 .assert-%:
-	@if [ "${${*}}" = "" ]; then 																									\
-    echo "[✗] Variable ${*} not set"  ; exit 1  															;	\
-	else 																																					\
-		echo "[√] ${*} set as: ${${*}}"																						;	\
+	@if [ "${${*}}" = "" ]; then                                                  \
+    echo "[✗] Variable ${*} not set"  ; exit 1                                ; \
+	else                                                                          \
+		echo "[√] ${*} set as: ${${*}}"                                           ; \
 	fi
 
 
@@ -62,21 +63,18 @@ clean: .source-dir
 # - follows standard design patterns
 ###############################################
 
-## Generic test until I move it over to Rake
-default: test
-
 test:
 	@echo "[info] Testing Terraform"
-	@if ! terraform fmt -write=false -check=true >> /dev/null; then 							\
-		echo "[✗] Terraform fmt failed: $$d"; 																			\
-		exit 1; 																																		\
-	else 																																					\
-		echo "[√] Terraform fmt"; 																									\
+	@if ! terraform fmt -write=false -check=true >> /dev/null; then               \
+		echo "[✗] Terraform fmt failed: $$d"                                      ; \
+		exit 1                                                                    ; \
+	else                                                                          \
+		echo "[√] Terraform fmt"                                                  ; \
 	fi
 	@for d in $$(find . -type f -name '*.tf' -path "./targets/*" -not -path "**/.terraform/*" -exec dirname {} \; | sort -u); do \
-		cd $$d; 																																		\
-		terraform init -backend=false >> /dev/null; 																\
-		terraform validate -check-variables=false; 																	\
+		cd $$d                                                                    ; \
+		terraform init -backend=false >> /dev/null                                ; \
+		terraform validate -check-variables=false                                 ; \
 		if [ $$? -eq 1 ]; then 																											\
 			echo "[✗] Terraform validate failed: $$d"; 																\
 			exit 1; 																																	\
