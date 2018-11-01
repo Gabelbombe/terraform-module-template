@@ -9,6 +9,12 @@ before_install:
   - sudo unzip tflint.zip -d /opt/tflint
   - sudo ln -s /opt/tflint/tflint /usr/bin/tflint
   - rm -f tflint.zip
+  - curl -fSL "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o awscli-bundle.zip
+  - unzip awscli-bundle.zip
+  - ./awscli-bundle/install -b ~/bin/aws
+  - mkdir -p ~/.aws
+  - echo -e "[default]\naws_access_key_id=foo\naws_secret_access_key=bar\nregion=us-west-2" > ~/.aws/config
+  - sudo apt-get install graphviz
 notifications:
   email: dodomeki@gmail.com
 script:
