@@ -1,5 +1,7 @@
 ROLE          ?= default ## make {func} ROLE=<AWS_ACCOUNT_ROLE>
 
+REGION        ?= us-east-1   ## make {func} REGION=<AWS_TARGET_REGION>
+
 
 ###############################################
 # Global Variables
@@ -10,12 +12,17 @@ SHELL         := /bin/bash
 CHDIR_SHELL   := $(SHELL)
 OS            := darwin
 
-ACCOUNT_ID    := $(shell aws sts --profile $(ROLE) get-caller-identity --output text --query 'Account')
-
 BASE_DIR      := $(shell pwd)
+ACCOUNT_ID    := $(shell aws sts --profile $(ROLE) get-caller-identity --output text --query 'Account')
+INVENTORY     := $(shell which terraform-inventory |awk '{print$3}')
+
 STATE_DIR     := $(BASE_DIR)/_states
 LOGS_DIR      := $(BASE_DIR)/_logs
 KEYS_DIR      := $(BASE_DIR)/_keys
+
+MODULE        := $(BASE_DIR)/modules
+ANSIBLE       := $(BASE_DIR)/ansible
+
 
 ## Default generic to test until I move it over to Rake
 default: test
@@ -31,10 +38,10 @@ define chdir
 endef
 
 .check-region:
-	@if test "$(REGION)" = "" ; then echo "REGION not set"; exit 1; fi
+	@test "$(REGION)" = "" && { echo "REGION not set"; exit 1; }
 
-.source-dir:
-	$(call chdir, modules)
+.directory-%:
+	$(call chdir, ${${*}})
 
 .assert-%:
 	@if [ "${${*}}" = "" ]; then                                                  \
@@ -49,18 +56,18 @@ endef
 # Generic functions
 # - follows standard design patterns
 ###############################################
-graph: .source-dir
+graph: .directory-MODULE
 	terraform init && terraform graph |dot -Tpng >| $(LOGS_DIR)/graph.png
 
-clean: .source-dir
-	@rm -rf .terraform
-	@rm -f $(LOGS_DIR)/graph.png
-	@rm -f $(LOGS_DIR)/*.log
+clean:
+	@rm -rf $(TERRAFORM)/.terraform
+	@rm -f  $(LOGS_DIR)/graph.png
+	@rm -f  $(LOGS_DIR)/*.log
 
 
 ###############################################
 # Testing functions
-# - follows standard design patterns
+# - follow testing design patterns
 ###############################################
 
 test:
@@ -75,20 +82,20 @@ test:
 		cd $$d                                                                    ; \
 		terraform init -backend=false >> /dev/null                                ; \
 		terraform validate -check-variables=false                                 ; \
-		if [ $$? -eq 1 ]; then 																											\
-			echo "[✗] Terraform validate failed: $$d"; 																\
-			exit 1; 																																	\
-		fi; 																																				\
+		if [ $$? -eq 1 ]; then                                                      \
+			echo "[✗] Terraform validate failed: $$d"                               ; \
+			exit 1                                                                  ; \
+		fi                                                                        ; \
 	done
 	@echo "[√] terraform validate targets (not including variables)"
 	@for d in $$(find . -type f -name '*.tf' -path "./examples/*" -not -path "**/.terraform/*" -exec dirname {} \; | sort -u); do \
-		cd $$d; 																																		\
-		terraform init -backend=false >> /dev/null; 																\
-		terraform validate; 																												\
-		if [ $$? -eq 1 ]; then 																											\
-			echo "[✗] Terraform validate failed: $$d"; 																\
-			exit 1; 																																	\
-		fi; 																																				\
+		cd $$d                                 ; \
+		terraform init -backend=false >> /dev/null;                                 \
+		terraform validate;                                                         \
+		if [ $$? -eq 1 ]; then                                                      \
+			echo "[✗] Terraform validate failed: $$d";                                \
+			exit 1;                                                                   \
+		fi;                                                                         \
 	done
 	@echo "[√] Terraform validate examples"
 
@@ -101,18 +108,21 @@ test:
 # - follows standard design patterns
 ###############################################
 
+init: .directory-MODULE
+	terraform init
 
-# Add your build functions here...
+
+## -> Add your build functions here...
 
 
 target_name-destroy: .source-dir .check-region
-	echo -e "\n\n\n\ntarget_name-destroy: $(date +"%Y-%m-%d @ %H:%M:%S")\n" 			\
+	echo -e "\n\n\n\ntarget_name-destroy: $(date +"%Y-%m-%d @ %H:%M:%S")\n"       \
 		>> $(LOGS_DIR)/target_name-destroy.log
 	terraform init 2>&1 |tee $(LOGS_DIR)/target_name-init.log
-	aws-vault exec $(ROLE) --assume-role-ttl=60m -- terraform destroy 						\
-		-state=$(STATE_DIR)/$(ACCOUNT_ID)/${REGION}-target_name.tfstate 						\
-		-var region="${REGION}" 																										\
-		-auto-approve																																\
+	aws-vault exec $(ROLE) --assume-role-ttl=60m -- terraform destroy             \
+		-state=$(STATE_DIR)/$(ACCOUNT_ID)/${REGION}-target_name.tfstate             \
+		-var region="${REGION}"                                                     \
+		-auto-approve                                                               \
 	2>&1 |tee $(LOGS_DIR)/target_name-destroy.log
 
 
